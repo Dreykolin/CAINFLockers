@@ -34,6 +34,7 @@ class SolicitudesViewModel : ViewModel() {
     val errorMessage: StateFlow<String?> get() = _errorMessage
 
     // URL de tu CSV (para la lectura)
+    // Aunque ahora leeremos con la API, mantengo la URL por si acaso o para referencia.
     private val csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSXWcbMwf9FPU4PId68Znb3sMl9aVBI57K9VkZtu-q_RugNOb2wbL939ARsmo50BnFp12J1r_CFw0fj/pub?output=csv"
 
     // --- Configuración para Google Sheets API ---
@@ -128,6 +129,8 @@ class SolicitudesViewModel : ViewModel() {
                         currentList[index] = currentList[index].copy(estadoSolicitud = newState) // Usa el newState
                         _solicitudes.value = currentList
                     }
+                    // Después de una actualización exitosa, recarga los datos para asegurar la consistencia.
+                    fetchSolicitudesFromSheet() // <-- ¡LLAMADA A LA NUEVA FUNCIÓN DE LECTURA!
 
                 } else {
                     _errorMessage.value = "Error: No se recibió respuesta al actualizar la hoja."
@@ -144,60 +147,75 @@ class SolicitudesViewModel : ViewModel() {
     }
 
 
-    fun fetchSolicitudesFromCsv() {
-        viewModelScope.launch {
+    // --- ¡NUEVA FUNCIÓN PARA LEER DIRECTAMENTE DE LA HOJA DE CÁLCULO! ---
+    fun fetchSolicitudesFromSheet() {
+        viewModelScope.launch(Dispatchers.IO) { // Ejecutar en hilo de IO para operaciones de red
             _isLoading.value = true
             _errorMessage.value = null
 
-            try {
-                val csvText = withContext(Dispatchers.IO) {
-                    Log.d("CSV_DOWNLOAD", "Intentando descargar CSV desde: $csvUrl")
-                    val client = OkHttpClient()
-                    val request = Request.Builder().url(csvUrl).build()
-                    val response = client.newCall(request).execute()
-
-                    response.use {
-                        if (it.isSuccessful && it.body != null) {
-                            it.body!!.string()
-                        } else {
-                            val errorBody = it.body?.string() ?: "N/A"
-                            Log.e("CSV_DOWNLOAD", "Respuesta no exitosa o body nulo: código ${it.code}, body: $errorBody")
-                            throw IOException("Error de red: Código ${it.code}, Mensaje: ${it.message}")
-                        }
-                    }
+            if (sheetsService == null) {
+                initializeSheetsService() // Intenta inicializar de nuevo si es nulo
+                if (sheetsService == null) {
+                    _errorMessage.value = "Error: Servicio de Google Sheets no inicializado. ¿Credenciales válidas?"
+                    _isLoading.value = false
+                    Log.e("SolicitudesViewModel", "Servicio de Sheets nulo al intentar leer.")
+                    return@launch
                 }
+            }
 
-                if (csvText.isNotEmpty()) {
-                    val rows = csvReader().readAllWithHeader(csvText)
-                    val lista = rows.mapIndexed { index, row -> // Usamos mapIndexed para obtener el índice de fila
-                        // ¡IMPORTANTE! Las hojas de cálculo tienen índice base 1.
-                        // Si tu primera fila (index 0 de la lista) corresponde a la fila 2 de la hoja
-                        // (porque la fila 1 son encabezados), entonces el rowNumber será (index + 2).
+            try {
+                // Rango para leer todos los datos desde la hoja "Solicitudes"
+                // Asume que la primera fila son encabezados y los datos comienzan en la fila 2.
+                // ¡MODIFICA "Solicitudes" si tu hoja tiene otro nombre!
+                val range = "Solicitudes!A:Z" // Lee desde la columna A hasta la Z
+
+                Log.d("SheetsRead", "Intentando leer datos desde: $spreadsheetId, rango: $range")
+
+                val response = sheetsService?.spreadsheets()?.values()?.get(spreadsheetId, range)?.execute()
+                val values = response?.getValues()
+
+                if (values != null && values.isNotEmpty()) {
+                    // La primera fila son los encabezados, los datos reales empiezan en la segunda fila (índice 1)
+                    val lista = values.drop(1).mapIndexed { index, row -> // drop(1) para saltar los encabezados
+                        // Mapea los valores de la fila a tu objeto Solicitud
+                        // Asumimos un orden fijo de columnas basado en tu CSV original:
+                        // Columna 0: timestamp
+                        // Columna 1: numeroLocker
+                        // Columna 2: nombreEstudiante
+                        // Columna 3: rutEstudiante
+                        // Columna 4: estadoSolicitud
+                        // Asegúrate de que este orden coincida con tu hoja real.
                         Solicitud(
-                            timestamp = row["timestamp"] ?: "",
-                            numeroLocker = row["numeroLocker"] ?: "",
-                            nombreEstudiante = row["nombreEstudiante"] ?: "",
-                            rutEstudiante = row["rutEstudiante"] ?: "",
-                            estadoSolicitud = row["estadoSolicitud"] ?: "",
-                            rowNumber = index + 2 // Esto calcula el número de fila en la hoja de cálculo.
+                            timestamp = row.getOrElse(0) { "" }.toString(),
+                            numeroLocker = row.getOrElse(1) { "" }.toString(),
+                            nombreEstudiante = row.getOrElse(2) { "" }.toString(),
+                            rutEstudiante = row.getOrElse(3) { "" }.toString(),
+                            estadoSolicitud = row.getOrElse(4) { "" }.toString(),
+                            rowNumber = index + 2 // rowNumber en la hoja (base 1) = índice de la lista + 2 (por los encabezados)
                         )
                     }
                     _solicitudes.value = lista
-                    Log.d("CSV_DOWNLOAD", "CSV procesado exitosamente. ${lista.size} solicitudes cargadas.")
+                    Log.d("SheetsRead", "Datos de la hoja procesados exitosamente. ${lista.size} solicitudes cargadas.")
                 } else {
-                    _errorMessage.value = "El archivo CSV está vacío o no se pudo descargar."
-                    Log.e("CSV_DOWNLOAD", "El archivo CSV está vacío o no se pudo descargar.")
+                    _errorMessage.value = "La hoja de cálculo está vacía o no se pudieron leer los datos."
+                    Log.e("SheetsRead", "La hoja de cálculo está vacía o no se pudieron leer los datos.")
                 }
 
-            } catch (e: IOException) {
-                Log.e("CSV_DOWNLOAD", "Error de red o E/S: ${e.message}", e)
-                _errorMessage.value = "Error de conexión: ${e.localizedMessage ?: "Verifica tu conexión a internet."}"
             } catch (e: Exception) {
-                Log.e("CSV_DOWNLOAD", "Se capturó una excepción general al procesar los datos: ${e.message}", e)
-                _errorMessage.value = "Hubo un problema al procesar los datos."
+                Log.e("SheetsRead", "Error al leer la hoja de cálculo: ${e.message}", e)
+                _errorMessage.value = "Error al leer datos: ${e.localizedMessage}"
             } finally {
                 _isLoading.value = false
             }
         }
+    }
+    // --- FIN DE LA NUEVA FUNCIÓN DE LECTURA ---
+
+
+    // Renombra la función anterior si no la usas, o elimínala.
+    // fun fetchSolicitudesFromCsv() { ... }
+    // O simplemente haz que fetchSolicitudesFromCsv llame a fetchSolicitudesFromSheet
+    fun fetchSolicitudesFromCsv() { // Mantengo el nombre por compatibilidad con ListaSolicitudesScreen
+        fetchSolicitudesFromSheet()
     }
 }
