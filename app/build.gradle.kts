@@ -60,7 +60,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.0.0")
     // Kotlin CSV
     implementation("com.github.doyaaaaaken:kotlin-csv-jvm:1.7.0")
-
+    implementation("io.coil-kt:coil-compose:2.6.0") // Puedes usar una versión más reciente si lo deseas
     // OkHttp
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")

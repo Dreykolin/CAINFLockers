@@ -88,7 +88,7 @@ class SolicitudesViewModel : ViewModel() {
      * @param estadoColumnLetter La letra de la columna donde se encuentra el estado (ej. "E" para columna E).
      * @param newState El nuevo estado al que se debe cambiar la solicitud (ej. "REVISADO" o "PENDIENTE").
      */
-    fun markSolicitudAsReviewed(timestamp: String, rowNumber: Int, estadoColumnLetter: String, newState: String) { // <-- ¡newState AÑADIDO AQUÍ!
+    fun markSolicitudAsReviewed(timestamp: String, rowNumber: Int, estadoColumnLetter: String, newState: String) {
         viewModelScope.launch(Dispatchers.IO) { // Ejecutar en hilo de IO para operaciones de red
             _isLoading.value = true
             _errorMessage.value = null
@@ -147,7 +147,9 @@ class SolicitudesViewModel : ViewModel() {
     }
 
 
-    // --- ¡NUEVA FUNCIÓN PARA LEER DIRECTAMENTE DE LA HOJA DE CÁLCULO! ---
+    /**
+     * Lee los datos directamente de la hoja de cálculo de Google.
+     */
     fun fetchSolicitudesFromSheet() {
         viewModelScope.launch(Dispatchers.IO) { // Ejecutar en hilo de IO para operaciones de red
             _isLoading.value = true
@@ -184,6 +186,7 @@ class SolicitudesViewModel : ViewModel() {
                         // Columna 2: nombreEstudiante
                         // Columna 3: rutEstudiante
                         // Columna 4: estadoSolicitud
+                        // Columna 5: comprobanteUrl (¡NUEVA COLUMNA!)
                         // Asegúrate de que este orden coincida con tu hoja real.
                         Solicitud(
                             timestamp = row.getOrElse(0) { "" }.toString(),
@@ -191,7 +194,8 @@ class SolicitudesViewModel : ViewModel() {
                             nombreEstudiante = row.getOrElse(2) { "" }.toString(),
                             rutEstudiante = row.getOrElse(3) { "" }.toString(),
                             estadoSolicitud = row.getOrElse(4) { "" }.toString(),
-                            rowNumber = index + 2 // rowNumber en la hoja (base 1) = índice de la lista + 2 (por los encabezados)
+                            rowNumber = index + 2, // rowNumber en la hoja (base 1) = índice de la lista + 2 (por los encabezados)
+                            comprobanteUrl = row.getOrElse(5) { "" }.toString().takeIf { it.isNotBlank() } // <--- ¡NUEVA LÍNEA PARA LEER LA URL!
                         )
                     }
                     _solicitudes.value = lista
@@ -209,13 +213,11 @@ class SolicitudesViewModel : ViewModel() {
             }
         }
     }
-    // --- FIN DE LA NUEVA FUNCIÓN DE LECTURA ---
+    // --- FIN DE LA FUNCIÓN DE LECTURA ---
 
 
-    // Renombra la función anterior si no la usas, o elimínala.
-    // fun fetchSolicitudesFromCsv() { ... }
-    // O simplemente haz que fetchSolicitudesFromCsv llame a fetchSolicitudesFromSheet
-    fun fetchSolicitudesFromCsv() { // Mantengo el nombre por compatibilidad con ListaSolicitudesScreen
+    // Mantengo el nombre fetchSolicitudesFromCsv por compatibilidad con ListaSolicitudesScreen
+    fun fetchSolicitudesFromCsv() {
         fetchSolicitudesFromSheet()
     }
 }

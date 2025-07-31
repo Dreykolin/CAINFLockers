@@ -6,5 +6,6 @@ data class Solicitud(
     val nombreEstudiante: String,
     val rutEstudiante: String,
     val estadoSolicitud: String,
-    val rowNumber: Int = 0 // <--- ¡Esta es la línea añadida!
+    val rowNumber: Int = 0,
+    val comprobanteUrl: String? = null // <--- ¡NUEVA LÍNEA AÑADIDA! Puede ser nulo si no hay comprobante.
 )

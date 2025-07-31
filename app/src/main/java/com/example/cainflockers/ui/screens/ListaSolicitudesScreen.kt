@@ -25,10 +25,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.cainflockers.data.models.Solicitud // Importa Solicitud
 import com.example.cainflockers.ui.viewmodel.SolicitudesViewModel
-import com.example.cainflockers.ui.components.SolicitudCard // <-- ¡NUEVA IMPORTACIÓN AQUÍ!
+import com.example.cainflockers.ui.components.SolicitudCard // ¡Importa SolicitudCard!
 
 @Composable
-fun ListaSolicitudesScreen(viewModel: SolicitudesViewModel) {
+fun ListaSolicitudesScreen(
+    viewModel: SolicitudesViewModel,
+    onViewReceiptClick: (String) -> Unit // Este callback viene de MainActivity para abrir URLs
+) {
     // Observamos los estados de nuestro ViewModel
     val solicitudes by viewModel.solicitudes.collectAsState() // La lista de solicitudes
     val isLoading by viewModel.isLoading.collectAsState()     // Si está cargando datos
@@ -89,14 +92,19 @@ fun ListaSolicitudesScreen(viewModel: SolicitudesViewModel) {
             ) {
                 items(solicitudes) { solicitud ->
                     // Usa el componente SolicitudCard para mostrar cada solicitud
-                    // ¡Aquí se pasa la lambda onMarkReviewed para que el botón funcione!
-                    // AHORA PASAMOS currentSolicitud Y newState a la lambda
-                    SolicitudCard(solicitud = solicitud) { currentSolicitud, newState ->
-                        // Llama a la función del ViewModel para actualizar el estado
-                        // ¡IMPORTANTE! Reemplaza "E" con la letra de la columna donde está el estado de tu solicitud.
-                        // Por ejemplo, si el estado está en la columna F, usa "F".
-                        viewModel.markSolicitudAsReviewed(currentSolicitud.timestamp, currentSolicitud.rowNumber, "E", newState) // <-- ¡CAMBIA "E" SI TU COLUMNA DE ESTADO ES OTRA!
-                    }
+                    // ¡Aquí se pasan AMBOS callbacks: onMarkReviewed y onViewReceipt!
+                    SolicitudCard(
+                        solicitud = solicitud,
+                        onMarkReviewed = { currentSolicitud, newState ->
+                            // Llama a la función del ViewModel para actualizar el estado
+                            // ¡IMPORTANTE! Reemplaza "E" con la letra de la columna donde está el estado de tu solicitud.
+                            viewModel.markSolicitudAsReviewed(currentSolicitud.timestamp, currentSolicitud.rowNumber, "E", newState) // <-- ¡CAMBIA "E" SI TU COLUMNA DE ESTADO ES OTRA!
+                        },
+                        onViewReceipt = { url ->
+                            // Llama al callback que viene de MainActivity para abrir la URL
+                            onViewReceiptClick(url)
+                        }
+                    )
                 }
             }
         }

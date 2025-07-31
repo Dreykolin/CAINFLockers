@@ -1,21 +1,22 @@
 package com.example.cainflockers
 
 import android.os.Bundle
-import android.content.Intent // Importar Intent
-import android.util.Log // Importar Log para los mensajes
+import android.content.Intent
+import android.net.Uri // Importar Uri
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.activity.result.ActivityResultLauncher // Importar ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts // Importar ActivityResultContracts
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding // Importar para el padding del contenido
-import androidx.compose.material3.Button // Importar Button
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text // Importar Text
+import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,14 +37,14 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccoun
 import com.google.api.services.sheets.v4.SheetsScopes
 
 // Importaciones para TopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api // Para @OptIn
-import androidx.compose.material3.Scaffold // Para la estructura de la pantalla
-import androidx.compose.material3.TopAppBar // Para la barra superior
-import androidx.compose.material3.TopAppBarDefaults // Para colores de la barra superior
-import androidx.compose.ui.unit.dp // Para unidades de medida
-import androidx.compose.foundation.layout.Row // Para organizar elementos en la barra superior
-import androidx.compose.foundation.layout.Spacer // Para espacio flexible
-import androidx.compose.foundation.layout.width // Para ancho del espaciador
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 
 
 class MainActivity : ComponentActivity() {
@@ -54,7 +55,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var googleSignInLauncher: ActivityResultLauncher<Intent>
 
-    @OptIn(ExperimentalMaterial3Api::class) // Anotación para usar TopAppBar
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -76,7 +77,7 @@ class MainActivity : ComponentActivity() {
         }
         // --- Fin de la Configuración de Google Sign-In ---
 
-        // Carga las solicitudes desde un archivo CSV.
+        // Carga las solicitudes desde un archivo CSV (ahora leerá de la hoja de cálculo).
         viewModel.fetchSolicitudesFromCsv()
 
         setContent {
@@ -86,12 +87,10 @@ class MainActivity : ComponentActivity() {
 
                     val lastSignedInAccount = GoogleSignIn.getLastSignedInAccount(this)
 
-                    // Verifica si no hay una cuenta, O si la cuenta no tiene los permisos necesarios.
                     if (lastSignedInAccount == null || !GoogleSignIn.hasPermissions(
-                            lastSignedInAccount, // La cuenta que estamos verificando
-                            Scope(SheetsScopes.SPREADSHEETS) // Los permisos específicos que necesitamos
+                            lastSignedInAccount,
+                            Scope(SheetsScopes.SPREADSHEETS)
                         )) {
-                        // Si no hay una cuenta VÁLIDA con los permisos, muestra la pantalla de inicio de sesión.
                         Column(
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.Center,
@@ -103,12 +102,10 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     } else {
-                        // Si el usuario ya está autenticado, pasa la credencial al ViewModel
                         val credential = GoogleAccountCredential.usingOAuth2(this, listOf(SheetsScopes.SPREADSHEETS))
                         credential.selectedAccount = lastSignedInAccount.account
                         viewModel.setGoogleCredential(credential)
 
-                        // --- ¡ESTE ES EL BLOQUE MODIFICADO PARA INCLUIR LA NAVBAR! ---
                         Scaffold(
                             topBar = {
                                 TopAppBar(
@@ -117,41 +114,40 @@ class MainActivity : ComponentActivity() {
                                         titleContentColor = MaterialTheme.colorScheme.primary,
                                     ),
                                     title = {
-                                        Text("CAINFLockers") // Nombre de tu app
+                                        Text("CAINFLockers")
                                     },
                                     actions = {
-                                        // Botón de Cerrar Sesión en la barra superior
                                         Button(onClick = { signOut() }) {
                                             Text("Cerrar Sesión")
                                         }
-                                        Spacer(Modifier.width(8.dp)) // Espacio a la derecha del botón
+                                        Spacer(Modifier.width(8.dp))
                                     }
                                 )
                             },
                             content = { paddingValues ->
                                 Column(modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(paddingValues) // Aplica el padding del Scaffold
+                                    .padding(paddingValues)
                                 ) {
-                                    ListaSolicitudesScreen(viewModel) // Tu pantalla de solicitudes
-                                    // El botón de cerrar sesión ya no necesita estar aquí abajo
+                                    // Pasa el nuevo callback onViewReceiptClick a ListaSolicitudesScreen
+                                    ListaSolicitudesScreen(
+                                        viewModel = viewModel,
+                                        onViewReceiptClick = { url -> openUrlInBrowser(url) } // <--- ¡PASANDO LA FUNCIÓN AQUÍ!
+                                    )
                                 }
                             }
                         )
-                        // --- FIN DEL BLOQUE MODIFICADO ---
                     }
                 }
             }
         }
     }
 
-    // Función para iniciar el flujo de inicio de sesión con Google
     private fun signIn() {
         val signInIntent = googleSignInClient.signInIntent
         googleSignInLauncher.launch(signInIntent)
     }
 
-    // Función para manejar el resultado del inicio de sesión
     private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
         try {
             val account = completedTask.getResult(ApiException::class.java)
@@ -161,10 +157,7 @@ class MainActivity : ComponentActivity() {
             credential.selectedAccount = account.account
             viewModel.setGoogleCredential(credential)
 
-            // --- ¡ADICIÓN CLAVE AQUÍ PARA FORZAR LA ACTUALIZACIÓN DE LA UI! ---
-            // Recrea la actividad para que la UI se actualice y la lógica de onCreate se reevalúe.
             recreate()
-            // --- FIN DE LA ADICIÓN ---
 
         } catch (e: ApiException) {
             Log.w("MainActivity", "signInResult:failed code=" + e.statusCode)
@@ -181,6 +174,21 @@ class MainActivity : ComponentActivity() {
                     Log.e("MainActivity", "Error al cerrar sesión: ${task.exception?.message}")
                 }
             }
+    }
+
+    /**
+     * Abre una URL en el navegador web del dispositivo.
+     * @param url La URL a abrir.
+     */
+    private fun openUrlInBrowser(url: String) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(intent)
+            Log.d("MainActivity", "Abriendo URL: $url")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error al intentar abrir URL: $url", e)
+            // Aquí podrías mostrar un Toast o un diálogo al usuario informando del error
+        }
     }
 
     override fun onStart() {
