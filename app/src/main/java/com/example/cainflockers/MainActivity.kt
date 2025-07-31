@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts // Importar Act
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding // Importar para el padding del contenido
 import androidx.compose.material3.Button // Importar Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -32,7 +33,18 @@ import com.google.android.gms.tasks.Task
 
 // Importaciones para Google Sheets API (no se usan directamente aquí, pero necesarias para las credenciales)
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
-import com.google.api.services.sheets.v4.SheetsScopes // Para los permisos de Sheets
+import com.google.api.services.sheets.v4.SheetsScopes
+
+// Importaciones para TopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api // Para @OptIn
+import androidx.compose.material3.Scaffold // Para la estructura de la pantalla
+import androidx.compose.material3.TopAppBar // Para la barra superior
+import androidx.compose.material3.TopAppBarDefaults // Para colores de la barra superior
+import androidx.compose.ui.unit.dp // Para unidades de medida
+import androidx.compose.foundation.layout.Row // Para organizar elementos en la barra superior
+import androidx.compose.foundation.layout.Spacer // Para espacio flexible
+import androidx.compose.foundation.layout.width // Para ancho del espaciador
+
 
 class MainActivity : ComponentActivity() {
 
@@ -42,35 +54,24 @@ class MainActivity : ComponentActivity() {
     private lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var googleSignInLauncher: ActivityResultLauncher<Intent>
 
+    @OptIn(ExperimentalMaterial3Api::class) // Anotación para usar TopAppBar
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // --- Configuración de Google Sign-In ---
-        // 1. Configura las opciones de inicio de sesión de Google
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            // Solicita el token de ID (si lo necesitas para tu backend)
-            // .requestIdToken(getString(R.string.default_web_client_id))
-
-            // ¡Importante! Solicita los ámbitos (scopes) para acceder a Google Sheets
             .requestScopes(Scope(SheetsScopes.SPREADSHEETS))
-
-            // ELIMINA O COMENTA ESTA LÍNEA QUE CAUSA EL ERROR:
-            // .requestScopes(Scope(SheetsScopes.DRIVE_FILE), Scope(SheetsScopes.DRIVE_APPDATA)) // EJEMPLO: Si también necesitas Drive
-
-            .requestEmail() // También puedes pedir el email del usuario
+            .requestEmail()
             .build()
 
-        // 2. Crea el cliente de Google Sign-In
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
-        // 3. Configura el lanzador para el resultado del inicio de sesión
         googleSignInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 val task: Task<GoogleSignInAccount> = GoogleSignIn.getSignedInAccountFromIntent(result.data)
                 handleSignInResult(task)
             } else {
                 Log.e("MainActivity", "Fallo en el inicio de sesión con Google: ${result.resultCode}")
-                // Aquí puedes mostrar un mensaje al usuario, por ejemplo, un Toast
             }
         }
         // --- Fin de la Configuración de Google Sign-In ---
@@ -83,10 +84,8 @@ class MainActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     val solicitudes = viewModel.solicitudes.collectAsState()
 
-                    // Condicional para mostrar la pantalla de inicio de sesión o la lista de solicitudes
                     val lastSignedInAccount = GoogleSignIn.getLastSignedInAccount(this)
 
-                    // --- ¡CAMBIO CLAVE AQUÍ! ---
                     // Verifica si no hay una cuenta, O si la cuenta no tiene los permisos necesarios.
                     if (lastSignedInAccount == null || !GoogleSignIn.hasPermissions(
                             lastSignedInAccount, // La cuenta que estamos verificando
@@ -105,23 +104,41 @@ class MainActivity : ComponentActivity() {
                         }
                     } else {
                         // Si el usuario ya está autenticado, pasa la credencial al ViewModel
-                        // para que pueda interactuar con la Sheets API
                         val credential = GoogleAccountCredential.usingOAuth2(this, listOf(SheetsScopes.SPREADSHEETS))
                         credential.selectedAccount = lastSignedInAccount.account
-                        viewModel.setGoogleCredential(credential) // Asumiendo que añades esta función a tu ViewModel
+                        viewModel.setGoogleCredential(credential)
 
-                        // --- ¡ESTE ES EL BLOQUE QUE SE AÑADE/MODIFICA! ---
-                        // Muestra la pantalla principal de la aplicación con un botón para cerrar sesión.
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            ListaSolicitudesScreen(viewModel) // Tu pantalla de solicitudes
-                            Button(
-                                onClick = { signOut() }, // Llama a la nueva función signOut()
-                                modifier = Modifier.align(Alignment.CenterHorizontally)
-                            ) {
-                                Text("Cerrar Sesión")
+                        // --- ¡ESTE ES EL BLOQUE MODIFICADO PARA INCLUIR LA NAVBAR! ---
+                        Scaffold(
+                            topBar = {
+                                TopAppBar(
+                                    colors = TopAppBarDefaults.topAppBarColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        titleContentColor = MaterialTheme.colorScheme.primary,
+                                    ),
+                                    title = {
+                                        Text("CAINFLockers") // Nombre de tu app
+                                    },
+                                    actions = {
+                                        // Botón de Cerrar Sesión en la barra superior
+                                        Button(onClick = { signOut() }) {
+                                            Text("Cerrar Sesión")
+                                        }
+                                        Spacer(Modifier.width(8.dp)) // Espacio a la derecha del botón
+                                    }
+                                )
+                            },
+                            content = { paddingValues ->
+                                Column(modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(paddingValues) // Aplica el padding del Scaffold
+                                ) {
+                                    ListaSolicitudesScreen(viewModel) // Tu pantalla de solicitudes
+                                    // El botón de cerrar sesión ya no necesita estar aquí abajo
+                                }
                             }
-                        }
-                        // --- FIN DEL BLOQUE A AÑADIR/MODIFICAR ---
+                        )
+                        // --- FIN DEL BLOQUE MODIFICADO ---
                     }
                 }
             }
@@ -140,34 +157,31 @@ class MainActivity : ComponentActivity() {
             val account = completedTask.getResult(ApiException::class.java)
             Log.d("MainActivity", "Inicio de sesión exitoso. ID de Google: ${account.id}")
 
-            // Autenticación exitosa. Ahora tienes la cuenta de Google.
-            // Pasa la credencial al ViewModel para que la use con la Sheets API.
             val credential = GoogleAccountCredential.usingOAuth2(this, listOf(SheetsScopes.SPREADSHEETS))
             credential.selectedAccount = account.account
             viewModel.setGoogleCredential(credential)
 
-            // Ya no es necesario un setContent aquí, el onCreate se reevaluará al recrear la Activity.
+            // --- ¡ADICIÓN CLAVE AQUÍ PARA FORZAR LA ACTUALIZACIÓN DE LA UI! ---
+            // Recrea la actividad para que la UI se actualice y la lógica de onCreate se reevalúe.
+            recreate()
+            // --- FIN DE LA ADICIÓN ---
 
         } catch (e: ApiException) {
-            // El inicio de sesión falló. Mira el código de estado para más detalles.
             Log.w("MainActivity", "signInResult:failed code=" + e.statusCode)
         }
     }
 
-    // --- ¡ESTA ES LA NUEVA FUNCIÓN A AÑADIR DENTRO DE LA CLASE MainActivity! ---
     private fun signOut() {
         googleSignInClient.signOut()
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     Log.d("MainActivity", "Sesión de Google cerrada exitosamente.")
-                    // Recrea la actividad para que la UI se actualice y muestre la pantalla de inicio de sesión.
                     recreate()
                 } else {
                     Log.e("MainActivity", "Error al cerrar sesión: ${task.exception?.message}")
                 }
             }
     }
-    // --- FIN DE LA FUNCIÓN A AÑADIR ---
 
     override fun onStart() {
         super.onStart()
