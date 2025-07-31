@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -91,16 +90,15 @@ fun ListaSolicitudesScreen(viewModel: SolicitudesViewModel) {
                 items(solicitudes) { solicitud ->
                     // Usa el componente SolicitudCard para mostrar cada solicitud
                     // ¡Aquí se pasa la lambda onMarkReviewed para que el botón funcione!
-                    SolicitudCard(solicitud = solicitud) { currentSolicitud ->
+                    // AHORA PASAMOS currentSolicitud Y newState a la lambda
+                    SolicitudCard(solicitud = solicitud) { currentSolicitud, newState ->
                         // Llama a la función del ViewModel para actualizar el estado
                         // ¡IMPORTANTE! Reemplaza "E" con la letra de la columna donde está el estado de tu solicitud.
                         // Por ejemplo, si el estado está en la columna F, usa "F".
-                        viewModel.markSolicitudAsReviewed(currentSolicitud.timestamp, currentSolicitud.rowNumber, "E") // <-- ¡CAMBIA "E" SI TU COLUMNA DE ESTADO ES OTRA!
+                        viewModel.markSolicitudAsReviewed(currentSolicitud.timestamp, currentSolicitud.rowNumber, "E", newState) // <-- ¡CAMBIA "E" SI TU COLUMNA DE ESTADO ES OTRA!
                     }
                 }
             }
         }
     }
 }
-
-// <-- ¡LA DEFINICIÓN DE SolicitudCard YA NO VA AQUÍ! VA EN ui/components/SolicitudCard.kt

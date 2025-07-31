@@ -21,7 +21,8 @@ import com.example.cainflockers.data.models.Solicitud // Importa tu modelo Solic
 fun SolicitudCard(
     solicitud: Solicitud,
     modifier: Modifier = Modifier,
-    onMarkReviewed: (Solicitud) -> Unit // Función de callback para cuando se presiona el botón
+    // onMarkReviewed ahora recibe la Solicitud y el NUEVO estado deseado
+    onMarkReviewed: (Solicitud, String) -> Unit
 ) {
     Card(
         modifier = modifier
@@ -43,10 +44,16 @@ fun SolicitudCard(
                 text = "RUT: ${solicitud.rutEstudiante}",
                 style = MaterialTheme.typography.bodyMedium
             )
+            // El texto de estado ahora es siempre visible y su color puede variar.
+            // Eliminamos la redundancia del estado aquí.
             Text(
                 text = "Estado: ${solicitud.estadoSolicitud}",
                 style = MaterialTheme.typography.bodySmall,
-                color = if (solicitud.estadoSolicitud == "Aprobada") Color.Green else Color.Red
+                color = when (solicitud.estadoSolicitud.uppercase()) {
+                    "REVISADO" -> MaterialTheme.colorScheme.primary // O Color.Green si prefieres
+                    "APROBADA" -> Color.Green // Si "Aprobada" es un estado diferente con su propio color
+                    else -> Color.Red // Para "PENDIENTE" o cualquier otro estado por defecto
+                }
             )
             Text(
                 text = "Fecha: ${solicitud.timestamp}",
@@ -56,22 +63,19 @@ fun SolicitudCard(
 
             Spacer(modifier = Modifier.height(8.dp)) // Espacio entre el texto y el botón
 
-            // Botón para cambiar el estado a "Revisado"
-            // Solo muestra el botón si el estado actual no es ya "REVISADO" (ignora mayúsculas/minúsculas)
-            if (solicitud.estadoSolicitud.uppercase() != "REVISADO") {
-                Button(
-                    onClick = { onMarkReviewed(solicitud) }, // Llama al callback pasado desde ListaSolicitudesScreen
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Marcar como Revisado")
-                }
-            } else {
-                Text(
-                    text = "Estado: Revisado",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary // Color para indicar que ya está revisado
-                )
+            // --- ¡EL BOTÓN SIEMPRE ESTÁ AQUÍ Y CAMBIA SU TEXTO Y ACCIÓN! ---
+            val isReviewed = solicitud.estadoSolicitud.uppercase() == "REVISADO"
+            val buttonText = if (isReviewed) "Marcar como No Revisado" else "Marcar como Revisado"
+            // Define el estado al que se debe cambiar. Si es "REVISADO", se cambia a "PENDIENTE" (o tu estado inicial).
+            val newState = if (isReviewed) "PENDIENTE" else "REVISADO"
+
+            Button(
+                onClick = { onMarkReviewed(solicitud, newState) }, // Pasa la solicitud y el NUEVO estado
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(buttonText)
             }
+            // --- FIN DEL BOTÓN DE ALTERNANCIA ---
         }
     }
 }
