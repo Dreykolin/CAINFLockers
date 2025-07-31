@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -37,13 +38,29 @@ android {
     buildFeatures {
         compose = true
     }
+
+    // --- ¡AÑADIDO SOLO ESTE BLOQUE PARA RESOLVER EL ERROR META-INF/INDEX.LIST! ---
+    packaging {
+        resources {
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/*.kotlin_module" // Para evitar otros posibles conflictos de Kotlin
+            excludes += "META-INF/DEPENDENCIES" // <-- ¡AÑADE ESTA LÍNEA!**
+        }
+    }
+    // --- FIN DEL BLOQUE A AÑADIR ---
 }
 
 dependencies {
+    // Google API Client
+    implementation("com.google.api-client:google-api-client-android:1.34.0")
+    implementation("com.google.oauth-client:google-oauth-client-jetty:1.34.0")
+    implementation("com.google.api-client:google-api-client-gson:1.33.2")
+    implementation("com.google.apis:google-api-services-sheets:v4-rev20250616-2.0.0")// OAuth2 Sign-In
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
     // Kotlin CSV
     implementation("com.github.doyaaaaaken:kotlin-csv-jvm:1.7.0")
 
-// OkHttp
+    // OkHttp
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
