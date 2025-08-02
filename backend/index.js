@@ -1,17 +1,31 @@
-const express = require('express');
+const { GoogleAuth } = require('google-auth-library');
 const admin = require('firebase-admin');
+const express = require('express');
 const cors = require('cors');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+const fetch = require('node-fetch');
 
-// Carga las credenciales del archivo JSON aquí mismo
-const serviceAccount = require('./service-account.json');
+const serviceAccount = require('./serviceAccountKey.json');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
+
+const SCOPES = ['https://www.googleapis.com/auth/firebase.messaging'];
+const FCM_ENDPOINT = 'https://fcm.googleapis.com/v1/projects/cainflockers/messages:send'; // Cambia your-project-id
+
+const auth = new GoogleAuth({
+  scopes: SCOPES,
+});
+
+async function getAccessToken() {
+  const client = await auth.getClient();
+  const accessTokenResponse = await client.getAccessToken();
+  return accessTokenResponse.token;
+}
 
 app.post('/notificar', async (req, res) => {
   const { token, title, body } = req.body;
@@ -21,35 +35,44 @@ app.post('/notificar', async (req, res) => {
   }
 
   const message = {
-  data: {
-    title: title || "Título por defecto",
-    body: body || "Mensaje por defecto"
-  },
-  token: token,
+    message: {
+      token: token,
+      notification: {
+        title: title,
+        body: body,
+      },
+      android: {
+        priority: "high"
+      }
+    }
   };
+
   try {
-    const response = await admin.messaging().send(message);
-    console.log('✅ Notificación enviada:', response);
-    res.json({ success: true, response });
+    const accessToken = await getAccessToken();
+
+    const response = await fetch(FCM_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Error enviando mensaje:', errorData);
+      return res.status(response.status).json(errorData);
+    }
+
+    const data = await response.json();
+    console.log('Mensaje enviado:', data);
+    res.json({ success: true, data });
   } catch (error) {
-    console.error('❌ Error al enviar la notificación:', error);
+    console.error('Error al enviar notificación:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
-const tokens = [];
-app.post('/guardar-token', (req, res) => {
-  const { token } = req.body;
-  if (!token) return res.status(400).json({ error: 'Falta token' });
-  
-  if (!tokens.includes(token)) {
-    tokens.push(token);
-    console.log('Token guardado:', token);
-  }
-  
-  res.json({ success: true, tokens });
-});
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-});
+const PORT = 3000;
+app.listen(PORT, () => console.log(`Servidor escuchando en http://localhost:${PORT}`));

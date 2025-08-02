@@ -38,7 +38,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         sendTokenToBackend(token)
     }
     private fun sendTokenToBackend(token: String) {
-        val url = "http://192.168.50.100:3000/guardar-token"
+        val url = "http://192.168.50.100:3000/guardar_token"
 
         val jsonBody = JSONObject()
         jsonBody.put("token", token)
