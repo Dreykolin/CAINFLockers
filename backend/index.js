@@ -8,8 +8,7 @@ app.use(cors());
 app.use(express.json());
 const fetch = require('node-fetch');
 
-const serviceAccount = require('./serviceAccountKey.json');
-
+const serviceAccount = require('/etc/secrets/serviceAccountKey.json');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
