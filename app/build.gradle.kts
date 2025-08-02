@@ -52,7 +52,7 @@ android {
 
 dependencies {
     // ... tus dependencias existentes
-
+    implementation("com.android.volley:volley:1.2.1")
     // Firebase BOM (Platform) para gestionar versiones de Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.1.2")) // <--- ¡AÑADE ESTA LÍNEA! (verifica la última versión en Firebase Docs)
     // Firebase Cloud Messaging
@@ -87,6 +87,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.volley)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -1,38 +1,54 @@
 const express = require('express');
+const admin = require('firebase-admin');
 const cors = require('cors');
+
 const app = express();
-
-const admin = require('./firebase'); // tu configuración firebase-admin
-
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-app.post('/notificar', async (req, res) => {
-  const { token, titulo, cuerpo } = req.body;
+// Carga las credenciales del archivo JSON aquí mismo
+const serviceAccount = require('./service-account.json');
 
-  if (!token || !titulo || !cuerpo) {
-    return res.status(400).json({ error: 'Faltan datos' });
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+app.post('/notificar', async (req, res) => {
+  const { token, title, body } = req.body;
+
+  if (!token || !title || !body) {
+    return res.status(400).json({ error: 'Faltan datos: token, title o body' });
   }
 
   const message = {
-    token: token,
-    notification: {
-      title: titulo,
-      body: cuerpo
-    }
+  data: {
+    title: title || "Título por defecto",
+    body: body || "Mensaje por defecto"
+  },
+  token: token,
   };
-
   try {
     const response = await admin.messaging().send(message);
     console.log('✅ Notificación enviada:', response);
-    res.status(200).json({ success: true, response });
+    res.json({ success: true, response });
   } catch (error) {
-    console.error('❌ Error al enviar notificación:', error);
-    res.status(500).json({ error: error.message });
+    console.error('❌ Error al enviar la notificación:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
+app.post('/guardar-token', (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: 'Falta token' });
+  
+  if (!tokens.includes(token)) {
+    tokens.push(token);
+    console.log('Token guardado:', token);
+  }
+  
+  res.json({ success: true, tokens });
+});
 
-app.listen(3000, () => {
-  console.log('🚀 Servidor corriendo en http://localhost:3000');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });

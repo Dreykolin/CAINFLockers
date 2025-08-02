@@ -11,6 +11,9 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import org.json.JSONObject
+import com.android.volley.Request
+import com.android.volley.toolbox.Volley
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
@@ -31,6 +34,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         Log.d(TAG, "Refreshed token: $token")
         // Envía este token a tu backend si tienes uno para gestionar notificaciones dirigidas
+        //SendTokenToBackend(token)
     }
 
     private fun sendNotification(messageTitle: String?, messageBody: String?) {
@@ -76,4 +80,5 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     companion object {
         private const val TAG = "MyFirebaseMsgService"
     }
+
 }

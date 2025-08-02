@@ -1,14 +1,17 @@
 package com.example.cainflockers
-
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import androidx.activity.result.contract.ActivityResultContracts
 import android.os.Bundle
 import android.content.Intent
 import android.net.Uri // Importar Uri
+import android.os.Build
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -60,6 +63,25 @@ class MainActivity : ComponentActivity() {
         private const val TAG = "MainActivity"
     }
 
+    private val requestNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                Log.d(TAG, "Permiso de notificaciones concedido")
+                suscribirseATopic()
+            } else {
+                Log.d(TAG, "Permiso de notificaciones DENEGADO")
+            }
+        }
+    private fun suscribirseATopic() {
+        FirebaseMessaging.getInstance().subscribeToTopic("new_requests")
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "Suscrito al topic 'new_requests'")
+                } else {
+                    Log.e(TAG, "Error al suscribirse al topic", task.exception)
+                }
+            }
+    }
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,11 +113,21 @@ class MainActivity : ComponentActivity() {
                     Log.e(TAG, "Error al suscribirse al topic", task.exception)
                 }
             }
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                suscribirseATopic()
+            }
+        } else {
+            suscribirseATopic()
+        }
         // Carga las solicitudes desde un archivo CSV (ahora leerá de la hoja de cálculo).
         viewModel.fetchSolicitudesFromCsv()
 
         // UI con Compose
+
         setContent {
             CAINFLockersTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
