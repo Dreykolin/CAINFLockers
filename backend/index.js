@@ -36,6 +36,7 @@ app.post('/notificar', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+const tokens = [];
 app.post('/guardar-token', (req, res) => {
   const { token } = req.body;
   if (!token) return res.status(400).json({ error: 'Falta token' });
