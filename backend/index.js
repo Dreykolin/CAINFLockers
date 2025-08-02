@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 const fetch = require('node-fetch');
 
-const serviceAccount = require('/etc/secrets/serviceAccountKey.json');
+const serviceAccount = require(process.env.GOOGLE_APPLICATION_CREDENTIALS);
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
