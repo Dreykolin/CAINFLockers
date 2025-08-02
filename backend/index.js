@@ -86,5 +86,9 @@ app.post('/notificar', async (req, res) => {
   }
 });
 
+app.get("/ping", (req, res) => {
+  res.status(200).send("OK");
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => console.log(`Servidor escuchando en el puerto ${PORT}`));
