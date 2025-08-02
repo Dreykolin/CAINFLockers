@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+/backend/firebase-key.json
+/backend/base_de_datos.db
+/backend/node_modules
+/app/google-services.json
