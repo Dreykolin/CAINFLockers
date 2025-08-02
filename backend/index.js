@@ -26,6 +26,19 @@ async function getAccessToken() {
   const accessTokenResponse = await client.getAccessToken();
   return accessTokenResponse.token;
 }
+const tokens = [];
+app.post('/guardar_token', (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: 'Falta token' });
+
+  if (!tokens.includes(token)) {
+    tokens.push(token);
+    console.log('Token guardado:', token);
+  }
+  res.json({ success: true, tokens });
+});
+
+
 
 app.post('/notificar', async (req, res) => {
   const { token, title, body } = req.body;
