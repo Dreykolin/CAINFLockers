@@ -51,6 +51,14 @@ android {
 }
 
 dependencies {
+    // ... tus dependencias existentes
+
+    // Firebase BOM (Platform) para gestionar versiones de Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.1.2")) // <--- ¡AÑADE ESTA LÍNEA! (verifica la última versión en Firebase Docs)
+    // Firebase Cloud Messaging
+    implementation("com.google.firebase:firebase-messaging") // <--- ¡AÑADE ESTA LÍNEA!
+    // Firebase Analytics (opcional, pero recomendado para monitoreo)
+    implementation("com.google.firebase:firebase-analytics") // <--- ¡AÑADE ESTA LÍNEA!
     // Google API Client
     implementation("com.google.http-client:google-http-client-android:1.43.3")
     implementation("com.google.api-client:google-api-client-android:1.34.0")

@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
+import com.google.firebase.messaging.FirebaseMessaging
 
 
 class MainActivity : ComponentActivity() {
@@ -54,6 +55,10 @@ class MainActivity : ComponentActivity() {
     // Declaraciones para Google Sign-In
     private lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var googleSignInLauncher: ActivityResultLauncher<Intent>
+
+    companion object {
+        private const val TAG = "MainActivity"
+    }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,14 +77,25 @@ class MainActivity : ComponentActivity() {
                 val task: Task<GoogleSignInAccount> = GoogleSignIn.getSignedInAccountFromIntent(result.data)
                 handleSignInResult(task)
             } else {
-                Log.e("MainActivity", "Fallo en el inicio de sesión con Google: ${result.resultCode}")
+                Log.e(TAG, "Fallo en el inicio de sesión con Google: ${result.resultCode}")
             }
         }
         // --- Fin de la Configuración de Google Sign-In ---
 
+        // Suscribirse al topic para recibir notificaciones de solicitudes
+        FirebaseMessaging.getInstance().subscribeToTopic("new_requests")
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "Suscrito al topic 'new_requests'")
+                } else {
+                    Log.e(TAG, "Error al suscribirse al topic", task.exception)
+                }
+            }
+
         // Carga las solicitudes desde un archivo CSV (ahora leerá de la hoja de cálculo).
         viewModel.fetchSolicitudesFromCsv()
 
+        // UI con Compose
         setContent {
             CAINFLockersTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -125,14 +141,14 @@ class MainActivity : ComponentActivity() {
                                 )
                             },
                             content = { paddingValues ->
-                                Column(modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(paddingValues)
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(paddingValues)
                                 ) {
-                                    // Pasa el nuevo callback onViewReceiptClick a ListaSolicitudesScreen
                                     ListaSolicitudesScreen(
                                         viewModel = viewModel,
-                                        onViewReceiptClick = { url -> openUrlInBrowser(url) } // <--- ¡PASANDO LA FUNCIÓN AQUÍ!
+                                        onViewReceiptClick = { url -> openUrlInBrowser(url) }
                                     )
                                 }
                             }
@@ -151,7 +167,7 @@ class MainActivity : ComponentActivity() {
     private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
         try {
             val account = completedTask.getResult(ApiException::class.java)
-            Log.d("MainActivity", "Inicio de sesión exitoso. ID de Google: ${account.id}")
+            Log.d(TAG, "Inicio de sesión exitoso. ID de Google: ${account.id}")
 
             val credential = GoogleAccountCredential.usingOAuth2(this, listOf(SheetsScopes.SPREADSHEETS))
             credential.selectedAccount = account.account
@@ -160,7 +176,7 @@ class MainActivity : ComponentActivity() {
             recreate()
 
         } catch (e: ApiException) {
-            Log.w("MainActivity", "signInResult:failed code=" + e.statusCode)
+            Log.w(TAG, "signInResult:failed code=" + e.statusCode)
         }
     }
 
@@ -168,26 +184,21 @@ class MainActivity : ComponentActivity() {
         googleSignInClient.signOut()
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    Log.d("MainActivity", "Sesión de Google cerrada exitosamente.")
+                    Log.d(TAG, "Sesión de Google cerrada exitosamente.")
                     recreate()
                 } else {
-                    Log.e("MainActivity", "Error al cerrar sesión: ${task.exception?.message}")
+                    Log.e(TAG, "Error al cerrar sesión: ${task.exception?.message}")
                 }
             }
     }
 
-    /**
-     * Abre una URL en el navegador web del dispositivo.
-     * @param url La URL a abrir.
-     */
     private fun openUrlInBrowser(url: String) {
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             startActivity(intent)
-            Log.d("MainActivity", "Abriendo URL: $url")
+            Log.d(TAG, "Abriendo URL: $url")
         } catch (e: Exception) {
-            Log.e("MainActivity", "Error al intentar abrir URL: $url", e)
-            // Aquí podrías mostrar un Toast o un diálogo al usuario informando del error
+            Log.e(TAG, "Error al intentar abrir URL: $url", e)
         }
     }
 
@@ -195,7 +206,7 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         val account = GoogleSignIn.getLastSignedInAccount(this)
         if (account != null) {
-            Log.d("MainActivity", "Usuario ya autenticado en onStart: ${account.displayName}")
+            Log.d(TAG, "Usuario ya autenticado en onStart: ${account.displayName}")
         }
     }
 }
