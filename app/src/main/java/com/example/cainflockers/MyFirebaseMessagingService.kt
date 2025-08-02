@@ -13,6 +13,7 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import org.json.JSONObject
 import com.android.volley.Request
+import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
@@ -34,7 +35,26 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         Log.d(TAG, "Refreshed token: $token")
         // Envía este token a tu backend si tienes uno para gestionar notificaciones dirigidas
-        //SendTokenToBackend(token)
+        sendTokenToBackend(token)
+    }
+    private fun sendTokenToBackend(token: String) {
+        val url = "http://localhost:3000/guardar_token"
+
+        val jsonBody = JSONObject()
+        jsonBody.put("token", token)
+
+        val requestBody = jsonBody.toString()
+
+        val request = object : StringRequest(
+            Request.Method.POST, url,
+            { response -> Log.d(TAG, "Token enviado con éxito: $response") },
+            { error -> Log.e(TAG, "Error enviando token: $error") }
+        ) {
+            override fun getBodyContentType() = "application/json; charset=utf-8"
+            override fun getBody() = requestBody.toByteArray(Charsets.UTF_8)
+        }
+
+        Volley.newRequestQueue(this).add(request)
     }
 
     private fun sendNotification(messageTitle: String?, messageBody: String?) {
