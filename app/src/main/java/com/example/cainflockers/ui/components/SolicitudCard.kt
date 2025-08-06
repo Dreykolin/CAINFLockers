@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.example.cainflockers.data.models.Solicitud
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
 
 @Composable
 fun SolicitudCard(
@@ -26,6 +27,10 @@ fun SolicitudCard(
     onMarkReviewed: (Solicitud, String) -> Unit,
     onViewReceipt: (String) -> Unit
 ) {
+    // Estado para mostrar diálogo
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    var actionToConfirm by remember { mutableStateOf<String?>(null) }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -84,13 +89,11 @@ fun SolicitudCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Botón "Ver Comprobante"
             solicitud.comprobanteUrl?.let { url ->
                 if (url.isNotBlank()) {
                     Button(
                         onClick = { onViewReceipt(url) },
-                        modifier = Modifier
-                            .fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Ver Comprobante")
                     }
@@ -98,13 +101,15 @@ fun SolicitudCard(
                 }
             }
 
-            // Botones Aceptar / Rechazar en una Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(
-                    onClick = { onMarkReviewed(solicitud, "APROBADO") },
+                    onClick = {
+                        actionToConfirm = "APROBADO"
+                        showConfirmDialog = true
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .padding(end = 4.dp)
@@ -112,7 +117,10 @@ fun SolicitudCard(
                     Text("Aceptar")
                 }
                 Button(
-                    onClick = { onMarkReviewed(solicitud, "RECHAZADO") },
+                    onClick = {
+                        actionToConfirm = "RECHAZADO"
+                        showConfirmDialog = true
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .padding(start = 4.dp)
@@ -122,5 +130,38 @@ fun SolicitudCard(
             }
         }
     }
-}
 
+    if (showConfirmDialog && actionToConfirm != null) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = {
+                showConfirmDialog = false
+                actionToConfirm = null
+            },
+            title = {
+                Text("¿Está seguro de querer ${if (actionToConfirm == "APROBADO") "aceptar" else "rechazar"} esta solicitud?")
+
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        showConfirmDialog = false
+                        actionToConfirm = null
+                    }
+                ) {
+                    Text("No")
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onMarkReviewed(solicitud, actionToConfirm!!)
+                        showConfirmDialog = false
+                        actionToConfirm = null
+                    }
+                ) {
+                    Text("Sí")
+                }
+            }
+        )
+    }
+}
