@@ -86,6 +86,13 @@ app.post('/notificar', async (req, res) => {
   }
 });
 
+app.get('/tokens', (req, res) => {
+  if (req.query.key !== process.env.TOKENS_API_KEY) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  res.json({ tokens });
+});
+
 app.get("/ping", (req, res) => {
   res.status(200).send("OK");
 });
