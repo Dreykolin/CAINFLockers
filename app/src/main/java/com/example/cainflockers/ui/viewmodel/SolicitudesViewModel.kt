@@ -14,12 +14,11 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 
-// Importaciones necesarias para Google Sheets API y Credenciales
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
-import com.google.api.services.sheets.v4.Sheets // Importa la clase Sheets
-import com.google.api.client.extensions.android.http.AndroidHttp // Para el transporte HTTP
-import com.google.api.client.json.gson.GsonFactory // Para el parser JSON
-import com.google.api.services.sheets.v4.model.ValueRange // Para enviar datos a la hoja
+import com.google.api.services.sheets.v4.Sheets
+import com.google.api.client.extensions.android.http.AndroidHttp
+import com.google.api.client.json.gson.GsonFactory
+import com.google.api.services.sheets.v4.model.ValueRange
 
 
 class SolicitudesViewModel : ViewModel() {
@@ -33,13 +32,6 @@ class SolicitudesViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> get() = _errorMessage
 
-    // URL de tu CSV (para la lectura)
-    // Aunque ahora leeremos con la API, mantengo la URL por si acaso o para referencia.
-    private val csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSXWcbMwf9FPU4PId68Znb3sMl9aVBI57K9VkZtu-q_RugNOb2wbL939ARsmo50BnFp12J1r_CFw0fj/pub?output=csv"
-
-    // --- Configuración para Google Sheets API ---
-    // ¡TU ID DE HOJA DE CÁLCULO DE GOOGLE YA ESTÁ AQUÍ!
-    // Este ID se extrajo de la URL que proporcionaste.
     private val spreadsheetId = "1G0PVUxAMSGi-SQAUvkGqqhqWNb5UR_oh0Ot7o6ljsMA"
     private var googleCredential: GoogleAccountCredential? = null
     private var sheetsService: Sheets? = null // El servicio de Sheets
@@ -52,7 +44,6 @@ class SolicitudesViewModel : ViewModel() {
     fun setGoogleCredential(credential: GoogleAccountCredential) {
         this.googleCredential = credential
         Log.d("SolicitudesViewModel", "Credencial de Google establecida.")
-        // Una vez que tienes las credenciales, inicializa el servicio de Google Sheets
         initializeSheetsService()
     }
 
@@ -89,7 +80,7 @@ class SolicitudesViewModel : ViewModel() {
      * @param newState El nuevo estado al que se debe cambiar la solicitud (ej. "REVISADO" o "PENDIENTE").
      */
     fun markSolicitudAsReviewed(timestamp: String, rowNumber: Int, estadoColumnLetter: String, newState: String) {
-        viewModelScope.launch(Dispatchers.IO) { // Ejecutar en hilo de IO para operaciones de red
+        viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             _errorMessage.value = null
 
@@ -179,23 +170,16 @@ class SolicitudesViewModel : ViewModel() {
                 if (values != null && values.isNotEmpty()) {
                     // La primera fila son los encabezados, los datos reales empiezan en la segunda fila (índice 1)
                     val lista = values.drop(1).mapIndexed { index, row -> // drop(1) para saltar los encabezados
-                        // Mapea los valores de la fila a tu objeto Solicitud
-                        // Asumimos un orden fijo de columnas basado en tu CSV original:
-                        // Columna 0: timestamp
-                        // Columna 1: numeroLocker
-                        // Columna 2: nombreEstudiante
-                        // Columna 3: rutEstudiante
-                        // Columna 4: estadoSolicitud
-                        // Columna 5: comprobanteUrl (¡NUEVA COLUMNA!)
-                        // Asegúrate de que este orden coincida con tu hoja real.
                         Solicitud(
                             timestamp = row.getOrElse(0) { "" }.toString(),
-                            numeroLocker = row.getOrElse(1) { "" }.toString(),
+                            correoInstitucional = row.getOrElse(1) { "" }.toString(),
                             nombreEstudiante = row.getOrElse(2) { "" }.toString(),
-                            rutEstudiante = row.getOrElse(3) { "" }.toString(),
-                            estadoSolicitud = row.getOrElse(4) { "" }.toString(),
+                            matriculaEstudiante = row.getOrElse(3) { "" }.toString(),
+                            ubicacionCasillero = row.getOrElse(4) { "" }.toString(),
+                            renovacion = row.getOrElse(5) { "" }.toString(),
+                            estadoSolicitud = row.getOrElse(7) { "" }.toString(),
                             rowNumber = index + 2, // rowNumber en la hoja (base 1) = índice de la lista + 2 (por los encabezados)
-                            comprobanteUrl = row.getOrElse(5) { "" }.toString().takeIf { it.isNotBlank() } // <--- ¡NUEVA LÍNEA PARA LEER LA URL!
+                            comprobanteUrl = row.getOrElse(6) { "" }.toString().takeIf { it.isNotBlank() } // <--- ¡NUEVA LÍNEA PARA LEER LA URL!
                         )
                     }
                     _solicitudes.value = lista

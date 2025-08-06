@@ -98,7 +98,7 @@ fun ListaSolicitudesScreen(
                         onMarkReviewed = { currentSolicitud, newState ->
                             // Llama a la función del ViewModel para actualizar el estado
                             // ¡IMPORTANTE! Reemplaza "E" con la letra de la columna donde está el estado de tu solicitud.
-                            viewModel.markSolicitudAsReviewed(currentSolicitud.timestamp, currentSolicitud.rowNumber, "E", newState) // <-- ¡CAMBIA "E" SI TU COLUMNA DE ESTADO ES OTRA!
+                            viewModel.markSolicitudAsReviewed(currentSolicitud.timestamp, currentSolicitud.rowNumber, "H", newState) // <-- ¡CAMBIA "E" SI TU COLUMNA DE ESTADO ES OTRA!
                         },
                         onViewReceipt = { url ->
                             // Llama al callback que viene de MainActivity para abrir la URL

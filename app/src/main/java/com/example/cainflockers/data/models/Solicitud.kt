@@ -2,10 +2,12 @@ package com.example.cainflockers.data.models
 
 data class Solicitud(
     val timestamp: String,
-    val numeroLocker: String,
+    val correoInstitucional: String,
     val nombreEstudiante: String,
-    val rutEstudiante: String,
-    val estadoSolicitud: String,
-    val rowNumber: Int = 0,
-    val comprobanteUrl: String? = null // <--- ¡NUEVA LÍNEA AÑADIDA! Puede ser nulo si no hay comprobante.
+    val matriculaEstudiante: String,
+    val ubicacionCasillero: String,
+    val renovacion: String,
+    val comprobanteUrl: String? = null,
+    val estadoSolicitud: String = "PENDIENTE", // Puedes definir un valor por defecto si lo deseas
+    val rowNumber: Int = 0
 )
