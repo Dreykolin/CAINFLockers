@@ -50,7 +50,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import com.google.firebase.messaging.FirebaseMessaging
 
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.painterResource // <-- Y esta
 
+import androidx.compose.foundation.layout.size // <-- Y esta
+
+import androidx.compose.foundation.Image // <-- Agrega esta
 class MainActivity : ComponentActivity() {
 
     private val viewModel: SolicitudesViewModel by viewModels()
@@ -82,6 +94,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
     }
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -130,15 +143,18 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             CAINFLockersTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    val solicitudes = viewModel.solicitudes.collectAsState()
-
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val isLoading by viewModel.isLoading.collectAsState()
                     val lastSignedInAccount = GoogleSignIn.getLastSignedInAccount(this)
 
                     if (lastSignedInAccount == null || !GoogleSignIn.hasPermissions(
                             lastSignedInAccount,
                             Scope(SheetsScopes.SPREADSHEETS)
-                        )) {
+                        )
+                    ) {
                         Column(
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.Center,
@@ -150,7 +166,10 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     } else {
-                        val credential = GoogleAccountCredential.usingOAuth2(this, listOf(SheetsScopes.SPREADSHEETS))
+                        val credential = GoogleAccountCredential.usingOAuth2(
+                            this,
+                            listOf(SheetsScopes.SPREADSHEETS)
+                        )
                         credential.selectedAccount = lastSignedInAccount.account
                         viewModel.setGoogleCredential(credential)
 
@@ -162,9 +181,31 @@ class MainActivity : ComponentActivity() {
                                         titleContentColor = MaterialTheme.colorScheme.primary,
                                     ),
                                     title = {
-                                        Text("CAINFLockers")
+                                        // Usamos un Row para colocar los elementos horizontalmente
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically // Centra el logo y el texto verticalmente
+                                        ) {
+                                            Image(
+                                                painter = painterResource(id = R.drawable.ic_launcher_cainflockers_logo), // <-- ¡Cambia ic_launcher_foreground!
+                                                contentDescription = "Logo de CAINFLockers",
+                                                modifier = Modifier.size(32.dp) // Ajusta el tamaño del logo
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp)) // Espacio entre el logo y el texto
+                                            Text("CAINFLockers")
+                                        }
                                     },
                                     actions = {
+                                        // ¡Botón de refrescar aquí!
+                                        IconButton(
+                                            onClick = { viewModel.fetchSolicitudesFromCsv() },
+                                            enabled = !isLoading
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Refresh,
+                                                contentDescription = "Refrescar"
+                                            )
+                                        }
+                                        // Botón de cerrar sesión
                                         Button(onClick = { signOut() }) {
                                             Text("Cerrar Sesión")
                                         }

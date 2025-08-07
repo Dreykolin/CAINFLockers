@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.22" // Añade esto
 }
 
 android {
@@ -52,6 +53,7 @@ android {
 
 dependencies {
     // ... tus dependencias existentes
+    implementation("androidx.compose.material:material-icons-extended")
     implementation("com.android.volley:volley:1.2.1")
     // Firebase BOM (Platform) para gestionar versiones de Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.1.2")) // <--- ¡AÑADE ESTA LÍNEA! (verifica la última versión en Firebase Docs)
@@ -73,6 +75,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0") // Asegúrate de que esta línea esté ahí
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.2")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
     implementation("androidx.activity:activity-ktx:1.7.2")

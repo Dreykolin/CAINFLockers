@@ -1,5 +1,5 @@
 package com.example.cainflockers.ui.screens
-
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,7 +26,10 @@ import androidx.compose.ui.unit.dp
 import com.example.cainflockers.data.models.Solicitud // Importa Solicitud
 import com.example.cainflockers.ui.viewmodel.SolicitudesViewModel
 import com.example.cainflockers.ui.components.SolicitudCard // ¡Importa SolicitudCard!
-
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material3.Icon
 @Composable
 fun ListaSolicitudesScreen(
     viewModel: SolicitudesViewModel,
@@ -49,33 +52,20 @@ fun ListaSolicitudesScreen(
             .padding(horizontal = 16.dp, vertical = 8.dp), // Padding general
         horizontalAlignment = Alignment.CenterHorizontally // Centra el contenido horizontalmente
     ) {
-        // --- Botón de Refrescar ---
-        Button(
-            onClick = { viewModel.fetchSolicitudesFromCsv() }, // Llama a la función para recargar los datos
-            enabled = !isLoading, // El botón se deshabilita mientras está cargando
-            modifier = Modifier.fillMaxWidth() // El botón ocupa todo el ancho
-        ) {
-            Text("Refrescar Datos")
-        }
 
-        Spacer(modifier = Modifier.height(16.dp)) // Espacio debajo del botón
+
+        Spacer(modifier = Modifier.height(8.dp)) // Espacio debajo del botón
 
         // --- Indicador de Carga / Mensaje de Error / Lista de Solicitudes ---
         if (isLoading) {
-            // Si está cargando, muestra un indicador de progreso
-            CircularProgressIndicator(modifier = Modifier.padding(32.dp))
-            Text("Cargando solicitudes...", style = MaterialTheme.typography.bodyLarge)
+            LoadingState()
+
         } else if (errorMessage != null) {
-            // Si hay un error, muestra el mensaje de error
-            Text(
-                text = "Error al cargar: $errorMessage",
-                color = Color.Red,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(16.dp)
-            )
-            // Opcionalmente, puedes agregar un botón para reintentar aquí
-            Button(onClick = { viewModel.fetchSolicitudesFromCsv() }) {
-                Text("Reintentar")
+            errorMessage?.let { message ->
+                ErrorState(
+                    errorMessage = message,
+                    onRetryClick = { viewModel.fetchSolicitudesFromCsv() }
+                )
             }
         } else if (solicitudes.isEmpty()) {
             // Si no hay errores, no está cargando y la lista está vacía
@@ -85,6 +75,9 @@ fun ListaSolicitudesScreen(
                 modifier = Modifier.padding(16.dp)
             )
         } else {
+            val sortedSolicitudes = solicitudes.sortedByDescending {
+                it.timestamp // Usa la propiedad de timestamp para ordenar
+            }
             // Si todo está bien y hay solicitudes, las muestra en una lista perezosa
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -107,6 +100,84 @@ fun ListaSolicitudesScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+@Composable
+fun LoadingState() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator(modifier = Modifier.padding(bottom = 16.dp))
+        Text(
+            text = "Cargando solicitudes...",
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+@Composable
+fun ErrorState(
+    errorMessage: String,
+    onRetryClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Icono de advertencia
+        Icon(
+            imageVector = Icons.Default.Warning,
+            contentDescription = "Error",
+            tint = MaterialTheme.colorScheme.error, // Usa el color de error de tu tema
+            modifier = Modifier.size(64.dp) // Un tamaño más grande para que sea más visible
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Título del error
+        Text(
+            text = "¡Ups! No pudimos cargar los datos.",
+            style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 24.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Mensaje de error detallado
+        Text(
+            text = errorMessage,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 24.dp)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Botón para reintentar
+        Button(onClick = onRetryClick) {
+            Text("Reintentar")
         }
     }
 }

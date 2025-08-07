@@ -12,40 +12,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
+    primary = Purple80, // Puedes definir una paleta oscura diferente aquí
     secondary = PurpleGrey80,
     tertiary = Pink80
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = MainBlue, // <-- ¡Usamos tu color aquí!
+    onPrimary = White,
+    primaryContainer = LightBlue, // Un azul más claro para el contenedor de la barra superior
+    onPrimaryContainer = White,
+    surface = LightSurface, // Un fondo más amigable que el blanco puro
+    onSurface = Black
 )
 
 @Composable
 fun CAINFLockersTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // Desactivamos el color dinámico para usar el tuyo
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
+        // ... (el código del color dinámico puede ser eliminado o dejado como está)
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
