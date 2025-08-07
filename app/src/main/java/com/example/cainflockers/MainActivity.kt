@@ -188,7 +188,7 @@ class MainActivity : ComponentActivity() {
                                             Image(
                                                 painter = painterResource(id = R.drawable.ic_launcher_cainflockers_logo), // <-- ¡Cambia ic_launcher_foreground!
                                                 contentDescription = "Logo de CAINFLockers",
-                                                modifier = Modifier.size(32.dp) // Ajusta el tamaño del logo
+                                                modifier = Modifier.size(52.dp) // Ajusta el tamaño del logo
                                             )
                                             Spacer(modifier = Modifier.width(8.dp)) // Espacio entre el logo y el texto
                                             Text("CAINFLockers")
@@ -209,7 +209,7 @@ class MainActivity : ComponentActivity() {
                                         Button(onClick = { signOut() }) {
                                             Text("Cerrar Sesión")
                                         }
-                                        Spacer(Modifier.width(8.dp))
+                                        Spacer(Modifier.width(12.dp))
                                     }
                                 )
                             },

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.example.cainflockers.data.models.Solicitud
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 fun SolicitudCard(
@@ -50,13 +51,11 @@ fun SolicitudCard(
         ) {
             // --- CONTENIDO BÁSICO (SIEMPRE VISIBLE) ---
             Text(
-                // Lógica condicional para mostrar "Estudiante: " solo si está expandido
-                text = "${if (isExpanded) "Estudiante: " else ""}${solicitud.nombreEstudiante}",
+                text = solicitud.nombreEstudiante, // <-- Eliminado el texto "Estudiante"
                 style = MaterialTheme.typography.titleMedium
             )
             Text(
-                // Lógica condicional para mostrar "Estado: " solo si está expandido
-                text = "${if (isExpanded) "Estado: " else ""}${solicitud.estadoSolicitud}",
+                text = solicitud.estadoSolicitud, // <-- Eliminado el texto "Estado"
                 style = MaterialTheme.typography.titleMedium,
                 color = when (solicitud.estadoSolicitud.uppercase()) {
                     "RECHAZADO" -> Color.Red
@@ -69,29 +68,57 @@ fun SolicitudCard(
             if (isExpanded) {
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = "Correo: ${solicitud.correoInstitucional}",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text(
-                    text = "Matrícula: ${solicitud.matriculaEstudiante}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "¿Qué ubicación de casillero quiere?: ${solicitud.ubicacionCasillero}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "¿Quiere renovar el mismo locker del semestre pasado?: ${solicitud.renovacion}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Row {
+                    Text(
+                        text = "Correo: ",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Text(
+                        text = solicitud.correoInstitucional,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                Row {
+                    Text(
+                        text = "Matrícula: ",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Text(
+                        text = solicitud.matriculaEstudiante,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                // Ubicación del Casillero: El título está en negrita
+                Row {
+                    Text(
+                        text = "Ubicación del Casillero: ",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Text(
+                        text = solicitud.ubicacionCasillero,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                // Renueva: El título está en negrita
+                Row {
+                    Text(
+                        text = "Renueva: ",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Text(
+                        text = solicitud.renovacion,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
                 Text(
                     text = "Fecha: ${solicitud.timestamp}",
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-
                 solicitud.comprobanteUrl?.let { url ->
                     if (url.isNotBlank()) {
                         Button(
