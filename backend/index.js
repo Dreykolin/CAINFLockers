@@ -145,3 +145,15 @@ app.get('/tokens', async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 });
+
+
+/**
+ * Endpoint de salud simple para verificar que el servidor está funcionando.
+ */
+app.get("/ping", (req, res) => {
+    res.status(200).send("OK");
+});
+
+// --- Inicio del Servidor ---
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => console.log(`Servidor escuchando en el puerto ${PORT}`));
