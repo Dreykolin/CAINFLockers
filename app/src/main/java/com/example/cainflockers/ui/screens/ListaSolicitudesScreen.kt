@@ -83,7 +83,7 @@ fun ListaSolicitudesScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp) // Espacio entre cada SolicitudCard
             ) {
-                items(solicitudes) { solicitud ->
+                items(sortedSolicitudes) { solicitud ->
                     // Usa el componente SolicitudCard para mostrar cada solicitud
                     // ¡Aquí se pasan AMBOS callbacks: onMarkReviewed y onViewReceipt!
                     SolicitudCard(

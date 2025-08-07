@@ -52,6 +52,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
     // ... tus dependencias existentes
     implementation("androidx.compose.material:material-icons-extended")
     implementation("com.android.volley:volley:1.2.1")
@@ -65,16 +66,18 @@ dependencies {
     implementation("com.google.http-client:google-http-client-android:1.43.3")
     implementation("com.google.api-client:google-api-client-android:1.34.0")
     implementation("com.google.oauth-client:google-oauth-client-jetty:1.34.0")
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.24.0")
     implementation("com.google.api-client:google-api-client-gson:1.33.2")
     implementation("com.google.apis:google-api-services-sheets:v4-rev20250616-2.0.0")// OAuth2 Sign-In
     implementation("com.google.android.gms:play-services-auth:21.0.0")
+    implementation("com.google.http-client:google-http-client-gson:1.44.2")
     // Kotlin CSV
     implementation("com.github.doyaaaaaken:kotlin-csv-jvm:1.7.0")
     implementation("io.coil-kt:coil-compose:2.6.0") // Puedes usar una versión más reciente si lo deseas
     // OkHttp
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0") // Asegúrate de que esta línea esté ahí
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.2")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
